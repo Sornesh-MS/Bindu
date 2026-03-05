@@ -356,12 +356,18 @@ class AgentSettings(BaseSettings):
     # Maps JSON-RPC method names to task_manager handler method names
     method_handlers: dict[str, str] = {
         "message/send": "send_message",
+        "message/stream": "stream_message",
         "tasks/get": "get_task",
         "tasks/cancel": "cancel_task",
         "tasks/list": "list_tasks",
         "contexts/list": "list_contexts",
         "contexts/clear": "clear_context",
         "tasks/feedback": "task_feedback",
+        # Push-notification config methods (A2A protocol extension)
+        "tasks/pushNotification/set": "set_task_push_notification",
+        "tasks/pushNotification/get": "get_task_push_notification",
+        "tasks/pushNotification/list": "list_task_push_notifications",
+        "tasks/pushNotification/delete": "delete_task_push_notification",
     }
 
     # Task State Configuration (A2A Protocol)
@@ -384,6 +390,11 @@ class AgentSettings(BaseSettings):
             "rejected",  # Rejected by agent
         }
     )
+
+    # message/stream polling behavior
+    stream_poll_interval_seconds: float = 0.1
+    stream_missing_task_retries: int = 2
+    stream_missing_task_retry_delay_seconds: float = 0.05
 
     # Structured Response System Prompt
     # This prompt instructs LLMs to return structured JSON responses for state transitions
@@ -504,6 +515,7 @@ class AuthSettings(BaseSettings):
         "/agent/skills",
         "/agent/skills/*",
         "/health",
+        "/healthz",  # strict readiness probe for k8s
         "/metrics",
         "/payment-capture",  # x402 payment capture page (browser-based)
     ]
@@ -601,6 +613,7 @@ class HydraSettings(BaseSettings):
         "/agent/skills",
         "/agent/skills/*",
         "/health",
+        "/healthz",  # strict readiness probe for k8s
         "/metrics",
         "/payment-capture",
         "/favicon.ico",
