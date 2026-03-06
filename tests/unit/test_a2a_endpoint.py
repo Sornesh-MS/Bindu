@@ -179,19 +179,7 @@ def _make_message_send_request(extra_state: dict | None = None) -> Request:
             "configuration": {"acceptedOutputModes": ["text/plain"]},
         },
     }
-    # camelCase keys required by a2a_request_ta
-    def _camel(s: str) -> str:
-        parts = s.split("_")
-        return parts[0] + "".join(p.title() for p in parts[1:])
-
-    def _cvt(obj):
-        if isinstance(obj, dict):
-            return {_camel(k): _cvt(v) for k, v in obj.items()}
-        if isinstance(obj, list):
-            return [_cvt(i) for i in obj]
-        return obj
-
-    raw = json.dumps(_cvt(data), default=str).encode()
+    raw = json.dumps(_convert_keys_to_camel(data), default=str).encode()
     sent_flag = {"value": False}
 
     async def receive():

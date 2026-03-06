@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, is_dataclass
+from typing import Any
 
 from starlette.requests import Request
 from starlette.responses import Response
@@ -26,7 +27,7 @@ from bindu.extensions.x402.extension import (
 logger = get_logger("bindu.server.endpoints.a2a_protocol")
 
 
-def _serialize_state_obj(obj: object) -> dict:
+def _serialize_state_obj(obj: Any) -> dict:
     """Safely serialize a payment state object to a plain dict.
 
     Tries, in order:
@@ -35,13 +36,16 @@ def _serialize_state_obj(obj: object) -> dict:
     3. ``dict()`` coercion as a last resort
 
     Raises:
-        TypeError: if none of the above strategies succeeds.
+        TypeError: propagated from ``dict()`` if the object is not coercible
+            to a mapping (i.e. does not implement ``keys()``/``__getitem__``).
+        RuntimeError: propagated from any of the above strategies if the
+            object raises during serialization.
     """
     if hasattr(obj, "model_dump"):
-        return obj.model_dump()  # type: ignore[union-attr]
+        return obj.model_dump()
     if is_dataclass(obj) and not isinstance(obj, type):
-        return asdict(obj)  # type: ignore[arg-type]
-    return dict(obj)  # type: ignore[call-overload]
+        return asdict(obj)
+    return dict(obj)
 
 
 async def agent_run_endpoint(app: BinduApplication, request: Request) -> Response:
